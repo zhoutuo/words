@@ -17,5 +17,8 @@ def main(global_config, **settings):
     config.add_static_view('static', 'static', cache_max_age=3600)
     # for the home page
     config.add_route('home', '/')
+    # for use view
+    config.add_route('user', '/users/{user_id}')
+    config.add_route('users', '/users/')
     config.scan()
     return config.make_wsgi_app()
