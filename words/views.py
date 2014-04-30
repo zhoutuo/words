@@ -18,10 +18,10 @@ def home_view(request):
     location = os.path.join(directory, 'static', 'index.html')
     return FileResponse(location)
 
-# todo: class test
 @view_defaults(route_name='user', renderer='json')
 class UserView(object):
-    S_ID = 'user_id'
+    S_PATH_ID = 'user_id'
+    S_ID = 'id'
     S_NAME = 'name'
     S_PASSWORD = 'password'
     def __init__(self, request):
@@ -29,7 +29,7 @@ class UserView(object):
 
     @view_config(request_method='GET')
     def get(self):
-        user_id = self.request.matchdict[UserView.S_ID]
+        user_id = self.request.matchdict[UserView.S_PATH_ID]
         try:
             # get the user name
             user_name = DBSession.query(User.name)\
@@ -38,7 +38,10 @@ class UserView(object):
         except NoResultFound:
             # if no such a ID exits
             return HTTPNotFound()
-        return dict(id=user_id, name=user_name)
+        return {
+            UserView.S_ID: user_id,
+            UserView.S_NAME: user_name
+        }
 
     # since the url is only 'users/', post method itself has a route name
     @view_config(route_name='users', request_method='POST', accept='application/json')
@@ -65,11 +68,14 @@ class UserView(object):
             return HTTPConflict()
         # http 201 created
         self.request.response.status_int = 201
-        return dict(id=user.id, name=user.name)
+        return {
+            UserView.S_ID: user.id,
+            UserView.S_NAME: user.name
+        }
 
     @view_config(request_method='PUT', accept='application/json')
     def put(self):
-        user_id = self.request.matchdict[UserView.S_ID]
+        user_id = self.request.matchdict[UserView.S_PATH_ID]
         try:
             request = self.request.json_body
         except ValueError:
@@ -97,11 +103,11 @@ class UserView(object):
             # there is already a same user name existing
             return HTTPConflict()
         # return the value
-        return dict(id=user_id, name=user.name)
+        return HTTPNoContent()
 
     @view_config(request_method='DELETE')
     def delete(self):
-        user_id = self.request.matchdict[UserView.S_ID]
+        user_id = self.request.matchdict[UserView.S_PATH_ID]
         try:
             user = DBSession.query(User).filter(User.id==user_id).one()
         except NoResultFound:
